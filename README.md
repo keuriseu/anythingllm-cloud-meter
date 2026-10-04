@@ -15,7 +15,7 @@ Everything runs on `127.0.0.1` and works in airplane mode. The meter needs no in
 
 ## Quick start
 
-1. **Get the files.** Click **Code**, then **Download ZIP**, and extract it. Or run `git clone https://github.com/keuriseu/anythingllm-cloud-meter`.
+1. **Get the files.** Download **[anythingllm-cloud-meter.zip](https://github.com/keuriseu/anythingllm-cloud-meter/releases/latest/download/anythingllm-cloud-meter.zip)** (latest release), right-click it, choose **Extract All**, and open the extracted folder. Or run `git clone https://github.com/keuriseu/anythingllm-cloud-meter`.
 2. **Install and open AnythingLLM Desktop.** In onboarding, pick **AnythingLLM GenieX** as the LLM provider and keep the default (native) embedder.
 3. **Double-click `setup.cmd`.** It walks through everything below and is safe to run again.
 
