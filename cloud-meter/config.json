@@ -1,0 +1,57 @@
+{
+  "mode": "live",
+  "pollMs": 1500,
+  "title": "AI cost meter",
+  "accent": "#e5484d",
+  "localLabel": "On this PC",
+
+  "tiers": {
+    "small": { "label": "Small tier", "model": "GPT-6 Luna",  "id": "gpt-6-luna",  "inPerM": 0.10, "outPerM": 0.50 },
+    "mid":   { "label": "Mid tier",   "model": "GPT-6.1 Sol", "id": "gpt-6.1-sol", "inPerM": 2.00, "outPerM": 10.00 }
+  },
+  "cloudModels": {
+    "openai/gpt-6.1-sol": { "label": "GPT-6.1 Sol via OpenRouter", "inPerM": 2.00, "outPerM": 10.00 }
+  },
+  "routerDemoModel": "openai/gpt-6.1-sol",
+  "embedPerM": 0.02,
+  "embedModel": "text-embedding-3-small",
+  "transcribePerMin": 0.006,
+  "transcribeModel": "gpt-4o-transcribe",
+  "pricingNote": "OpenAI API standard list prices as of 2026-10-03 (short context).",
+  "pricingSources": [
+    "https://developers.openai.com/api/docs/pricing (verified 2026-10-03, standard tier, short context: gpt-6-luna $0.10 in / $0.50 out, gpt-6.1-sol $2.00 in / $10.00 out, gpt-4o-transcribe $0.006 per minute)",
+    "https://developers.openai.com/api/docs/models/text-embedding-3-small (verified 2026-10-03: $0.02 per 1M tokens)",
+    "https://openrouter.ai/api/v1/models (checked 2026-10-03: openai/gpt-6.1-sol $2.00 in / $10.00 out per 1M tokens, same as OpenAI's direct price)",
+    "Note: https://openai.com/api/pricing now redirects to business plan pricing, not API prices"
+  ],
+
+  "projection": {
+    "seats": 1000,
+    "workdays": 250,
+    "perSeatPerDay": { "questions": 30, "agentTasks": 4, "pagesEmbedded": 40, "meetingMinutes": 60 },
+    "assumptions": {
+      "questionIn": 6000,
+      "questionOut": 600,
+      "agentIn": 25000,
+      "agentOut": 2500,
+      "tokensPerPage": 550,
+      "summaryInPerMin": 180,
+      "summaryOutPerMeeting": 700,
+      "minutesPerMeeting": 30
+    }
+  },
+
+  "server": { "port": 7777 },
+
+  "live": {
+    "enabled": true,
+    "anythingllm": {
+      "baseUrl": "http://127.0.0.1:3001",
+      "pollMs": 2000,
+      "countExistingChats": false,
+      "chatLimit": 50,
+      "systemPromptTokens": 400,
+      "cloudProviders": ["openai", "anthropic", "gemini", "azure", "openrouter", "openrouterllm", "groq", "mistral", "deepseek", "xai", "perplexity", "togetherai", "fireworksai", "cohere", "bedrock"]
+    }
+  }
+}

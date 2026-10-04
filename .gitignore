@@ -1,0 +1,10 @@
+# Meter day logs (created by server.js)
+cloud-meter/data/*.jsonl
+
+# Rehearsal results (created by rehearse.mjs)
+demo-kit/scripts/results/
+
+# Local tooling
+node_modules/
+.claude/
+*.log

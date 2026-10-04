@@ -1,0 +1,106 @@
+CORVANE SYSTEMS - DEAL REVIEW MEETING TRANSCRIPT
+Opportunity: Marlow Basin Water District, RFP MBWD-2026-14 (Field Inspection and Asset Management Mobile Platform)
+Date: Friday, October 2, 2026, 10:00 to 10:14 AM Pacific (video call)
+Attendees:
+  Dana Whitfield, Account Executive (meeting owner)
+  Marcus Oyelaran, Solutions Engineer
+  Priya Raman, Senior Product Manager
+  Tom Kessler, Deal Desk
+  Lena Ortiz, Security and Compliance Lead
+Fictional sample transcript for product demonstration. All names, organizations and figures are invented.
+
+-----------------------------------------------------------------------
+
+[00:00] Dana Whitfield: Okay, we have everyone. Thanks for jumping on. This is the second review for Marlow Basin. Proposals are due November 6, and the deadline for written questions is next Friday, October 9. So today I want to walk out of here with a decision on every mandatory gap and a price we can live with. Marcus, can you start with where we landed on the compliance matrix?
+
+[00:41] Marcus Oyelaran: Sure. There are twenty-six requirements. Twenty-one are mandatory. We fully meet most of them. Native Windows on Arm and iPad, the form builder, photos with GPS stamping, ArcGIS two-way sync, the Maximo connector, SAML single sign-on, encryption, US hosting, SOC 2, the uptime number. Retention we meet only with the Archive add-on, because our default is five years and they want seven. That is already in the base price.
+
+[01:18] Marcus Oyelaran: The mandatory gaps are five. R-06, offline for seventy-two hours. We do twenty-four. R-10, Spanish user interface. We are English only until 7.0. R-14, SCIM provisioning. We do just-in-time and CSV. R-17, customer-managed encryption keys. We only do our own keys in KMS. And R-20, incident notification within seventy-two hours. Our standard contract says five business days.
+
+[01:52] Dana Whitfield: And section 7.2 of the RFP says we can respond "will meet by a committed date," but only if we deliver before go-live and put the cost in the price form. Right?
+
+[02:03] Marcus Oyelaran: Correct. Go-live has to be within 120 days of award, and award is targeted for January 14. So everything has to land by mid-May at the latest.
+
+[02:15] Dana Whitfield: Priya, offline first. That one scares me most because Appendix A literally describes crews camping in a canyon for three days.
+
+[02:24] Priya Raman: It is real. Pine Hollow said the same thing in our Q3 interviews, almost word for word. Engineering's rough estimate is eighty-five thousand dollars and fourteen weeks to extend the cache lock window to ninety-six hours and make it configurable. That comfortably covers seventy-two. But that number is from a hallway conversation. I want the engineering lead to confirm the estimate and the timeline in writing.
+
+[02:51] Dana Whitfield: When can you have that?
+
+[02:54] Priya Raman: By Thursday, October 8.
+
+[02:57] Dana Whitfield: Good. Decision: we commit to R-06 as a custom development line item, pending Priya's confirmation. Spanish next.
+
+[03:06] Priya Raman: Spanish UI is already committed for 7.0 in Q2 2027, which is too late for a mid-May go-live. Pulling it forward is thirty-two thousand. Then the implementation team would translate their thirty-five form templates, which is another sixty-five hundred. The RFP says the District authors the form content in both languages, but I think we should offer it anyway. It looks good and it is cheap.
+
+[03:31] Tom Kessler: So thirty-eight five total for R-10.
+
+[03:34] Priya Raman: Yes.
+
+[03:35] Dana Whitfield: Agreed. Include both. Lena, SCIM.
+
+[03:40] Lena Ortiz: SCIM is the one their security policy is very explicit about. ISP-07 section 4.3 says anything over fifty users has to provision and deprovision automatically, and separated employees lose access within twenty-four hours. CSV uploads are specifically called out as not acceptable. So we cannot argue our way around it.
+
+[04:02] Priya Raman: SCIM is planned for the first half of next year, but it is not committed. Accelerating it is about forty thousand dollars and twelve weeks. I would need VP Engineering to sign off because it moves other work.
+
+[04:15] Lena Ortiz: As a fallback, their policy has an exception process in section 10. The CISO can grant up to 180 days. If SCIM slipped a few weeks past go-live we could ask for a short exception with a remediation date. But I would not lead with that.
+
+[04:31] Dana Whitfield: Agreed, we lead with the commitment. Include the forty thousand. Priya, add SCIM sign-off to your conversation with engineering.
+
+[04:39] Priya Raman: Will do.
+
+[04:41] Dana Whitfield: Customer-managed keys. Tom, this is the expensive one.
+
+[04:46] Tom Kessler: It is. One hundred twenty thousand one-time for the integration, plus about eighteen thousand a year for dedicated key hosting. Over three years that is one seventy-four. It is more than half of the total gap cost.
+
+[05:02] Lena Ortiz: Here is the nuance. The RFP asks for customer-managed keys for data classified as Confidential under ISP-07. Inspection records are Internal-Restricted, and their policy says vendor-managed keys are fine for that. So in theory we only need it if we hold Confidential data.
+
+[05:20] Marcus Oyelaran: I want to ask them that directly in our clarifying questions. If the answer is that none of the data in the platform is Confidential, we can drop it, or at least offer it as an optional line.
+
+[05:31] Dana Whitfield: Do it. Marcus, put the CMK scope question in the clarifying questions, and also ask which tablet model they are buying for R-25, the battery one. For now we price CMK in, so we are covered either way.
+
+[05:44] Marcus Oyelaran: Got it. I will get the questions to Janet Okafor before the October 9 deadline.
+
+[05:50] Dana Whitfield: R-20, incident notification.
+
+[05:53] Lena Ortiz: No engineering cost there. It is a contract change from five business days to seventy-two hours for this customer. Our security operations team can meet it in practice. I need Legal to approve the clause language because it differs from our standard terms. I will draft the clause and get it to Legal by Wednesday, October 7.
+
+[06:12] Dana Whitfield: Great. So that is zero dollars but needs approval. Tom, where does all of this put us on price?
+
+[06:19] Tom Kessler: Base proposal, so licenses, add-ons, implementation and training, is six hundred fifty-eight thousand and twenty dollars over three years. Gap closure as we just discussed is three hundred thirty-seven thousand five hundred. Total is nine ninety-five, five twenty. Their budget is one point one five million, so we have about one fifty-four thousand of headroom.
+
+[06:42] Dana Whitfield: That is more room than I expected. Should we use some of it on discount? Price is twenty-five percent of the score.
+
+[06:50] Tom Kessler: I modeled a few options. An eight percent discount on the user subscriptions takes about thirty-three thousand off and lands us around nine sixty-three. Anything over ten percent needs VP Sales approval and fifteen is the hard ceiling. I would like to confirm margin at eight percent with the VP before we commit. I can have that by October 9.
+
+[07:12] Dana Whitfield: Do that. My instinct is eight percent, but let us see the margin.
+
+[07:17] Dana Whitfield: Priya, anything else from the customer interviews I should worry about?
+
+[07:22] Priya Raman: Battery. R-25 is only desirable, but it asks for a full ten-hour shift with location on. Our own testing says eight to twelve percent battery per hour with background location, so most tablets will not make it. Four of the six customers we interviewed complained about it. The low-power location mode in 6.3 should fix it, but that ships in Q1 2027, so it is close to their go-live.
+
+[07:48] Dana Whitfield: Which brings up references. They want three utilities with at least a hundred fifty field users. I was going to use Granite Falls, Ridgeway and Sutter Bend.
+
+[07:58] Priya Raman: Granite Falls is your best reference by far. Ridgeway is happy overall, but Carla will absolutely bring up battery life if the District asks about field experience. If you use Ridgeway, brief her first on 6.3. Sutter Bend has the Spanish story, which helps us on R-10.
+
+[08:16] Dana Whitfield: Okay. I will confirm Granite Falls and Ridgeway by October 10 and talk to Carla before anyone calls her. I will also set up a call with our exec sponsor to align on the eight percent.
+
+[08:28] Marcus Oyelaran: One more timing risk. Standard implementation is sixteen weeks, a hundred twelve days, and they allow a hundred twenty. CMK is quoted at sixteen weeks from award too. That leaves very little slack, and there are liquidated damages of fifteen hundred a day if we miss go-live.
+
+[08:46] Dana Whitfield: Noted. Priya, can you ask engineering whether CMK can run in parallel with the base implementation?
+
+[08:51] Priya Raman: Yes, I will add it to the same conversation.
+
+[08:54] Dana Whitfield: Let me recap so it is in the notes. Decisions: we commit to all five mandatory gaps in the proposal as custom development or contract changes. R-06 offline at eighty-five thousand, pending confirmation. R-10 Spanish at thirty-eight five. R-14 SCIM at forty thousand, pending VP Engineering. R-17 customer-managed keys priced in at one seventy-four over three years, while we ask the District about scope. R-20 as a contract change. Proposed price before discount is nine ninety-five, five twenty against a one point one five million budget. Discount recommendation of eight percent pending margin review.
+
+[09:32] Dana Whitfield: Action items. Marcus, clarifying questions to Janet Okafor by October 9, including CMK scope and the R-25 tablet model. Lena, draft the seventy-two hour incident clause and get Legal review by October 7. Priya, written confirmation of the offline estimate and timeline by October 8, plus SCIM sign-off and whether CMK can run in parallel. Tom, margin at eight percent with VP Sales by October 9. Me, confirm references by October 10, brief Ridgeway, and schedule the exec sponsor call.
+
+[10:05] Dana Whitfield: Next review is Tuesday, October 13 at 10. Did I miss anything?
+
+[10:09] Lena Ortiz: I think we have covered the security side.
+
+[10:11] Tom Kessler: Nothing from me.
+
+[10:13] Dana Whitfield: Great. Thanks, everyone.
+
+[END OF TRANSCRIPT]

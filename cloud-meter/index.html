@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Cost Meter</title>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --panel: #12151a;
+    --panel-2: #171b21;
+    --line: #242a32;
+    --text: #eef1f5;
+    --muted: #8a93a1;
+    --dim: #59616d;
+    --accent: #e5484d;
+    --cloud: #f5a524;
+    --cloud-2: #ff7a45;
+    --local: #3ecf8e;
+    --warn: #f5a524;
+    --bad: #ef4444;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { overflow: hidden; }
+  .num { font-variant-numeric: tabular-nums; }
+  button { font: inherit; color: inherit; }
+
+  .app {
+    height: 100vh; display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    gap: clamp(10px, 1.6vh, 20px);
+    padding: clamp(14px, 2.4vh, 32px) clamp(16px, 2.4vw, 44px);
+  }
+
+  /* Top bar */
+  .top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .title { font-size: clamp(16px, 1.5vw, 26px); font-weight: 600; letter-spacing: .2px; margin-right: auto; display: flex; align-items: center; gap: 12px; }
+  .title .bar { width: 6px; height: 1.2em; border-radius: 3px; background: var(--accent); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--panel); font-size: clamp(12px, .85vw, 15px); color: var(--muted); white-space: nowrap;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); }
+  .dot.ok { background: var(--local); box-shadow: 0 0 10px var(--local); }
+  .dot.warn { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+  .seg { display: inline-flex; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+  .seg button {
+    border: 0; background: transparent; cursor: pointer; padding: 7px 16px; border-radius: 999px;
+    font-size: clamp(12px, .85vw, 15px); color: var(--muted);
+  }
+  .seg button[aria-pressed="true"] { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(10px, 1.4vw, 24px); min-height: 0; }
+  .card {
+    position: relative; overflow: hidden;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: clamp(16px, 2.4vh, 34px) clamp(18px, 2vw, 38px);
+  }
+  .label { font-size: clamp(13px, 1.05vw, 19px); color: var(--muted); letter-spacing: .3px; }
+  .label strong { color: var(--text); font-weight: 600; }
+  .big { font-weight: 700; line-height: 1; letter-spacing: -2px; margin: clamp(8px, 1.4vh, 18px) 0 clamp(6px, 1vh, 12px); }
+  .cloud .big { font-size: clamp(54px, 8.4vw, 168px); color: var(--cloud); text-shadow: 0 0 40px rgba(245,165,36,.18); }
+  .local .big { font-size: clamp(54px, 8.4vw, 168px); color: var(--local); text-shadow: 0 0 40px rgba(62,207,142,.18); }
+  .sub { font-size: clamp(12px, .9vw, 16px); color: var(--dim); }
+  .dual { display: none; gap: clamp(8px, 1.2vh, 16px); flex-direction: column; margin-top: clamp(8px, 1.4vh, 18px); }
+  .dual-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 16px; padding-bottom: clamp(6px, 1vh, 12px); border-bottom: 1px solid var(--line); }
+  .dual-row:last-child { border-bottom: 0; }
+  .dual-row .name { font-size: clamp(14px, 1.1vw, 20px); color: var(--muted); }
+  .dual-row .name small { display: block; color: var(--dim); font-size: .78em; margin-top: 2px; }
+  .dual-row .amt { font-size: clamp(40px, 5.2vw, 104px); font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+  .dual-row.small .amt { color: var(--cloud); }
+  .dual-row.mid .amt { color: var(--cloud-2); }
+  .cloud.both .single { display: none; }
+  .cloud.both .dual { display: flex; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: clamp(10px, 1.6vh, 20px); }
+  .chip { font-size: clamp(12px, .85vw, 15px); padding: 6px 12px; border-radius: 999px; background: rgba(62,207,142,.1); color: var(--local); border: 1px solid rgba(62,207,142,.25); }
+  .delta {
+    position: absolute; right: clamp(18px, 2vw, 38px); top: clamp(16px, 2.4vh, 34px);
+    font-size: clamp(18px, 1.8vw, 34px); font-weight: 700; color: var(--cloud);
+    opacity: 0; transform: translateY(10px); pointer-events: none;
+  }
+  .delta.show { animation: rise 1.8s ease-out forwards; }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(14px); } 15% { opacity: 1; transform: translateY(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-18px); } }
+  .card.pulse { animation: pulse .9s ease-out; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245,165,36,.45); } 100% { box-shadow: 0 0 0 22px rgba(245,165,36,0); } }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(8px, 1vw, 18px); }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: clamp(10px, 1.6vh, 20px) clamp(12px, 1.2vw, 22px); }
+  .stat .v { font-size: clamp(24px, 2.6vw, 52px); font-weight: 700; letter-spacing: -.5px; }
+  .stat .k { font-size: clamp(11px, .8vw, 14px); color: var(--muted); margin-top: 4px; }
+  .stat.hero-stat .v { color: var(--text); }
+
+  /* Bottom */
+  .bottom { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(10px, 1.4vw, 24px); min-height: 0; }
+  .feed { min-height: 0; display: flex; flex-direction: column; }
+  .feed h3, .proj h3 { margin: 0 0 clamp(8px, 1.2vh, 14px); font-size: clamp(12px, .9vw, 16px); font-weight: 600; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; }
+  .rows { display: flex; flex-direction: column; gap: 6px; overflow: hidden; flex: 1; min-height: 0; -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent); mask-image: linear-gradient(to bottom, #000 82%, transparent); }
+  .row {
+    display: grid; grid-template-columns: 26px 1fr auto auto; gap: 14px; align-items: center;
+    padding: clamp(6px, 1vh, 11px) 12px; border-radius: 10px; background: var(--panel-2);
+    font-size: clamp(12px, .95vw, 17px);
+  }
+  .row.new { animation: slidein .5s ease-out; }
+  @keyframes slidein { from { opacity: 0; transform: translateY(-8px); background: rgba(245,165,36,.18); } to { opacity: 1; transform: none; } }
+  .row .ic { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #0a0c0f; }
+  .ic.embed { background: #7aa2ff; } .ic.chat { background: var(--cloud); } .ic.agent { background: #c084fc; } .ic.transcribe { background: #5eead4; }
+  .row .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .lbl em { font-style: normal; color: var(--dim); margin-left: 6px; font-size: .85em; }
+  .row .tok { color: var(--muted); }
+  .row .usd { color: var(--cloud); font-weight: 600; min-width: 7ch; text-align: right; }
+  .row .usd.mid { color: var(--cloud-2); }
+  .row .usd.spent { color: var(--accent); }
+  .row .lbl em.via { color: var(--accent); margin: 0 8px 0 0; font-weight: 600; }
+  .empty { color: var(--dim); font-size: clamp(13px, 1vw, 17px); padding: 14px 4px; }
+  .proj .big2 { font-size: clamp(30px, 3.4vw, 66px); font-weight: 700; letter-spacing: -1px; color: var(--cloud); line-height: 1.05; }
+  .proj .big2.mid { color: var(--cloud-2); }
+  .proj .lines { display: flex; flex-direction: column; gap: 10px; }
+  .proj .cap { font-size: clamp(12px, .9vw, 16px); color: var(--muted); }
+  .proj .assume { margin-top: 10px; font-size: clamp(11px, .75vw, 13px); color: var(--dim); line-height: 1.45; }
+
+  .foot { display: flex; justify-content: space-between; gap: 18px; font-size: clamp(10px, .72vw, 13px); color: var(--dim); }
+  .foot .hint { white-space: nowrap; }
+
+  /* Help overlay */
+  .overlay { position: fixed; inset: 0; background: rgba(5,6,8,.78); display: none; place-items: center; z-index: 10; }
+  .overlay.open { display: grid; }
+  .help { width: min(720px, 92vw); background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 30px; }
+  .help h2 { margin: 0 0 6px; font-size: 22px; }
+  .help p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+  .keys { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .keys button {
+    display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 15px;
+  }
+  .keys button:hover { border-color: var(--dim); }
+  kbd { min-width: 30px; text-align: center; padding: 3px 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: var(--text); }
+
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--line); padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .app { height: auto; }
+    .hero, .bottom { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .keys { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="title"><span class="bar"></span><span id="title">AI cost meter</span></div>
+    <span class="pill" id="netPill"><span class="dot" id="netDot"></span><span id="netTxt">Network</span></span>
+    <span class="pill" id="srcPill"><span class="dot" id="srcDot"></span><span id="srcTxt">Simulator</span></span>
+    <span class="pill num" id="scopePill">This demo</span>
+    <div class="seg" role="group" aria-label="Cloud price tier">
+      <button data-tier="small" aria-pressed="true">Small tier</button>
+      <button data-tier="mid" aria-pressed="false">Mid tier</button>
+      <button data-tier="both" aria-pressed="false">Both</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="card cloud" id="cloudCard">
+      <div class="label">If this ran on a <strong>cloud AI API</strong></div>
+      <div class="single">
+        <div class="big num" id="cloudAmt">$0.0000</div>
+        <div class="sub" id="cloudSub">Small tier list price</div>
+      </div>
+      <div class="dual">
+        <div class="dual-row small"><div class="name" id="dualSmallName">Small tier</div><div class="amt num" id="dualSmall">$0.0000</div></div>
+        <div class="dual-row mid"><div class="name" id="dualMidName">Mid tier</div><div class="amt num" id="dualMid">$0.0000</div></div>
+      </div>
+      <div class="delta num" id="delta">+$0.00</div>
+    </div>
+    <div class="card local">
+      <div class="label"><strong id="localLabel">On this PC</strong></div>
+      <div class="big num" id="localAmt">$0.00</div>
+      <div class="sub" id="localSub">Runs on the device. Nothing metered.</div>
+      <div class="chips" id="localChips">
+        <span class="chip">No per-token fees</span>
+        <span class="chip">No API key</span>
+        <span class="chip">Works offline</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat hero-stat"><div class="v num" id="sTokens">0</div><div class="k">Tokens processed on device</div></div>
+    <div class="stat"><div class="v num" id="sDocs">0</div><div class="k" id="sDocsK">Pages embedded</div></div>
+    <div class="stat"><div class="v num" id="sQs">0</div><div class="k">Questions answered</div></div>
+    <div class="stat"><div class="v num" id="sAgent">0</div><div class="k">Agent tasks run</div></div>
+    <div class="stat"><div class="v num" id="sMin">0</div><div class="k">Meeting minutes transcribed</div></div>
+  </section>
+
+  <section class="bottom">
+    <div class="card feed">
+      <h3>Live activity</h3>
+      <div class="rows" id="rows"><div class="empty">Waiting for activity. Press <kbd>H</kbd> for demo controls.</div></div>
+    </div>
+    <div class="card proj">
+      <h3>At team scale</h3>
+      <div class="lines" id="projLines"></div>
+      <div class="assume" id="projAssume"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span id="footNote">Cloud figures use published API list prices. Local cost excludes hardware and electricity.</span>
+    <span class="hint">Press <kbd>H</kbd> for controls</span>
+  </footer>
+</div>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="help" role="dialog" aria-label="Demo controls">
+    <h2>Demo controls</h2>
+    <p id="helpMode">Simulator mode. Events are generated locally with realistic token counts.</p>
+    <div class="keys">
+      <button data-act="embed"><kbd>1</kbd> Embed a document</button>
+      <button data-act="chat"><kbd>2</kbd> Ask a question (RAG)</button>
+      <button data-act="agent"><kbd>3</kbd> Run an agent task</button>
+      <button data-act="meeting"><kbd>4</kbd> Transcribe + summarize a meeting</button>
+      <button data-act="cloudchat"><kbd>5</kbd> Reply routed to the cloud</button>
+      <button data-act="auto"><kbd>A</kbd> <span id="autoLbl">Start auto-play</span></button>
+      <button data-act="tier"><kbd>T</kbd> Cycle price tier</button>
+      <button data-act="scope"><kbd>D</kbd> Toggle this demo / today</button>
+      <button data-act="reset"><kbd>R</kbd> Reset for next visitor</button>
+      <button data-act="full"><kbd>F</kbd> Full screen</button>
+      <button data-act="close"><kbd>H</kbd> Close</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // Defaults are embedded so the page works when opened straight from disk.
+  // config.json (served by server.js) overrides any of these.
+  const DEFAULT_CONFIG = {
+    mode: "sim",
+    pollMs: 1500,
+    title: "AI cost meter",
+    accent: "#e5484d",
+    localLabel: "On this PC",
+    tiers: {
+      small: { label: "Small tier", model: "GPT-6 Luna",  id: "gpt-6-luna",  inPerM: 0.10, outPerM: 0.50 },
+      mid:   { label: "Mid tier",   model: "GPT-6.1 Sol", id: "gpt-6.1-sol", inPerM: 2.00, outPerM: 10.00 }
+    },
+    cloudModels: {
+      "openai/gpt-6.1-sol": { label: "GPT-6.1 Sol via OpenRouter", inPerM: 2.00, outPerM: 10.00 }
+    },
+    routerDemoModel: "openai/gpt-6.1-sol",
+    embedPerM: 0.02, embedModel: "text-embedding-3-small",
+    transcribePerMin: 0.006, transcribeModel: "gpt-4o-transcribe",
+    pricingNote: "OpenAI API standard list prices as of 2026-10-03 (short context).",
+    projection: {
+      seats: 1000, workdays: 250,
+      perSeatPerDay: { questions: 30, agentTasks: 4, pagesEmbedded: 40, meetingMinutes: 60 },
+      assumptions: { questionIn: 6000, questionOut: 600, agentIn: 25000, agentOut: 2500, tokensPerPage: 550, summaryInPerMin: 180, summaryOutPerMeeting: 700, minutesPerMeeting: 30 }
+    }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  let CFG = structuredClone(DEFAULT_CONFIG);
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+  const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+
+  const state = {
+    mode: "sim",
+    events: [], ids: new Set(),
+    sessionStart: store.get("meter:sessionStart", 0),
+    tier: store.get("meter:tier", "small"),
+    scope: store.get("meter:scope", "session"),
+    auto: false, autoTimer: null,
+    live: { connected: false, cursor: 0, adapter: null },
+    shown: { small: 0, mid: 0 }
+  };
+
+  // ---------- Config ----------
+  function merge(a, b) {
+    for (const k of Object.keys(b || {})) {
+      if (b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && a[k] && typeof a[k] === "object") merge(a[k], b[k]);
+      else a[k] = b[k];
+    }
+    return a;
+  }
+  async function loadConfig() {
+    try {
+      const r = await fetch("config.json", { cache: "no-store" });
+      if (r.ok) merge(CFG, await r.json());
+    } catch { /* opened from disk: defaults apply */ }
+    state.mode = params.get("mode") || CFG.mode || "sim";
+    if (state.mode === "live" && location.protocol === "file:") state.mode = "sim";
+    document.documentElement.style.setProperty("--accent", CFG.accent);
+    $("title").textContent = CFG.title;
+    $("localLabel").textContent = CFG.localLabel;
+    document.title = CFG.title;
+  }
+
+  // ---------- Pricing ----------
+  function price(t) {
+    const p = CFG.tiers[t];
+    return {
+      inPerM: p.inPerM, outPerM: p.outPerM,
+      embedPerM: p.embedPerM ?? CFG.embedPerM,
+      transcribePerMin: p.transcribePerMin ?? CFG.transcribePerMin
+    };
+  }
+  function cost(ev, t) {
+    if (ev.route === "cloud") return spent(ev); // really ran on the cloud: its real price, on every tier
+    const p = price(t);
+    return (ev.inputTokens || 0) * p.inPerM / 1e6
+         + (ev.outputTokens || 0) * p.outPerM / 1e6
+         + (ev.embedTokens || 0) * p.embedPerM / 1e6
+         + (ev.audioMinutes || 0) * p.transcribePerMin;
+  }
+  // Model Router: a reply that really ran on a cloud model is priced at that model's
+  // own list price (cloudModels, then the tier whose id matches), or the mid tier if
+  // unknown. A model marked "free" (a free API tier) is shown at its paid list price
+  // and labelled that way, never as money paid.
+  function cloudTier(ev) {
+    const cm = CFG.cloudModels || {};
+    const m = cm[ev.model] || cm[ev.model + ":free"]; // OpenRouter may record the id without ":free"
+    if (m) return { model: m.label || ev.model, inPerM: m.inPerM, outPerM: m.outPerM, free: !!m.free };
+    return Object.values(CFG.tiers).find(p => p.id && p.id === ev.model) || CFG.tiers.mid;
+  }
+  function spent(ev) {
+    if (ev.route !== "cloud") return 0;
+    const p = cloudTier(ev);
+    return (ev.inputTokens || 0) * p.inPerM / 1e6 + (ev.outputTokens || 0) * p.outPerM / 1e6;
+  }
+  function projection(t) {
+    const P = CFG.projection, d = P.perSeatPerDay, a = P.assumptions, p = price(t);
+    const tok = (i, o) => i * p.inPerM / 1e6 + o * p.outPerM / 1e6;
+    const meetings = d.meetingMinutes / Math.max(1, a.minutesPerMeeting);
+    const perDay =
+      d.questions * tok(a.questionIn, a.questionOut) +
+      d.agentTasks * tok(a.agentIn, a.agentOut) +
+      d.pagesEmbedded * a.tokensPerPage * p.embedPerM / 1e6 +
+      d.meetingMinutes * p.transcribePerMin +
+      meetings * tok(a.summaryInPerMin * a.minutesPerMeeting, a.summaryOutPerMeeting);
+    return { perSeatDay: perDay, perSeatYear: perDay * P.workdays, team: perDay * P.workdays * P.seats };
+  }
+
+  // ---------- Formatting ----------
+  const fmtInt = (n) => Math.round(n).toLocaleString("en-US");
+  function fmtUSD(n) {
+    const dp = n < 1 ? 4 : n < 100 ? 3 : 2;
+    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+  function fmtBig(n) {
+    if (n >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+    if (n >= 1e4) return "$" + Math.round(n / 1e3).toLocaleString("en-US") + "K";
+    return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
+  const fmtTok = (n) => n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e4 ? (n / 1e3).toFixed(1) + "K" : fmtInt(n);
+
+  // ---------- Events ----------
+  function scoped() {
+    return state.scope === "today" ? state.events : state.events.filter(e => e.ts >= state.sessionStart);
+  }
+  function totals(list) {
+    const t = { tokens: 0, embedTok: 0, pages: 0, docs: 0, qs: 0, agent: 0, min: 0, small: 0, mid: 0, spent: 0, cloudQs: 0, estimated: false };
+    for (const e of list) {
+      if (e.route === "cloud") { t.spent += spent(e); t.cloudQs++; if (cloudTier(e).free) t.freeModel = cloudTier(e); }
+      else t.tokens += (e.inputTokens || 0) + (e.outputTokens || 0) + (e.embedTokens || 0);
+      if (e.kind === "embed") { t.embedTok += e.embedTokens || 0; t.pages += e.pages || 0; t.docs++; }
+      if (e.kind === "chat") t.qs++;
+      if (e.kind === "agent") t.agent++;
+      t.min += e.audioMinutes || 0;
+      t.small += cost(e, "small"); t.mid += cost(e, "mid");
+      if (e.estimated) t.estimated = true;
+    }
+    return t;
+  }
+  function addEvent(e, animate = true) {
+    if (!e || state.ids.has(e.id)) return false;
+    state.ids.add(e.id); state.events.push(e);
+    if (animate && (state.scope === "today" || e.ts >= state.sessionStart)) flashDelta(e);
+    return true;
+  }
+  function persistSim() { if (state.mode === "sim") store.set("meter:events:" + dayKey(), state.events.slice(-2000)); }
+
+  // ---------- Simulator ----------
+  const DOCS = [["RFP_Network_Refresh_2026.pdf", 212], ["Product_Spec_v4.docx", 48], ["Pricing_Model_FY27.xlsx", 12], ["Customer_Interviews_Q3.pptx", 36], ["Security_Policy_Handbook.pdf", 140], ["Partner_Earnings_Call.txt", 22]];
+  const QUESTIONS = ["Which RFP requirements does our spec miss?", "Summarize pricing risks across all docs", "What did customers say about battery life?", "Draft a compliance checklist from the policy", "Compare Q3 interview themes to the roadmap", "What is the cost impact of the missing requirements?"];
+  const AGENT = ["Draft follow-up emails for every action item", "Build a requirements gap table", "Outline a proposal response with citations", "Turn meeting notes into a project plan"];
+  const MEET = ["Weekly product sync", "Partner co-marketing review", "Customer escalation call", "Launch readiness check-in"];
+  const rnd = (a, b) => Math.round(a + Math.random() * (b - a));
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const newId = (p) => `${p}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  function makeEvents(kind, source) {
+    const ts = Date.now();
+    if (kind === "embed") {
+      const [name, p] = pick(DOCS);
+      const pages = Math.max(1, Math.round(p * (0.9 + Math.random() * 0.2)));
+      return [{ id: newId(source), ts, kind, label: name, pages, embedTokens: pages * rnd(480, 620), source }];
+    }
+    if (kind === "chat") return [{ id: newId(source), ts, kind, label: pick(QUESTIONS), inputTokens: rnd(4000, 9000), outputTokens: rnd(300, 900), source }];
+    if (kind === "cloudchat") return [{ id: newId(source), ts, kind: "chat", label: "Write a cover letter to the District (routed)", inputTokens: rnd(1500, 3000), outputTokens: rnd(500, 900), route: "cloud", model: CFG.routerDemoModel || CFG.tiers.mid.id, source }];
+    if (kind === "agent") return [{ id: newId(source), ts, kind, label: pick(AGENT), steps: rnd(4, 9), inputTokens: rnd(15000, 40000), outputTokens: rnd(1500, 4000), source }];
+    if (kind === "meeting") {
+      const m = rnd(8, 30), name = pick(MEET), id = newId(source);
+      return [
+        { id, ts, kind: "transcribe", label: `${name}`, audioMinutes: m, source },
+        { id: id + "-sum", ts: ts + 1, kind: "chat", label: `Summary and action items: ${name}`, inputTokens: m * rnd(160, 200), outputTokens: rnd(500, 900), source }
+      ];
+    }
+    return [];
+  }
+  async function trigger(kind) {
+    const evs = makeEvents(kind, state.mode === "live" ? "manual" : "sim");
+    if (state.mode === "live") {
+      try {
+        await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ events: evs }) });
+        await poll();
+      } catch { toast("Helper not reachable"); }
+      return;
+    }
+    // stagger multi-part events so the feed reads naturally
+    evs.forEach((e, i) => setTimeout(() => { e.ts = Date.now(); addEvent(e); persistSim(); render(); }, i * 900));
+  }
+  function setAuto(on) {
+    state.auto = on;
+    clearTimeout(state.autoTimer);
+    $("autoLbl").textContent = on ? "Stop auto-play" : "Start auto-play";
+    if (!on) return;
+    const step = () => {
+      const r = Math.random();
+      trigger(r < 0.45 ? "chat" : r < 0.65 ? "embed" : r < 0.85 ? "agent" : "meeting");
+      state.autoTimer = setTimeout(step, rnd(3500, 8000));
+    };
+    step();
+  }
+
+  // ---------- Live polling ----------
+  async function poll() {
+    try {
+      const r = await fetch(`/api/events?since=${state.live.cursor}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      if (j.reset) { state.events = []; state.ids.clear(); state.live.cursor = 0; }
+      const first = state.live.cursor === 0;
+      let added = false;
+      for (const e of j.events || []) added = addEvent(e, !first) || added;
+      state.live.cursor = j.cursor;
+      state.live.connected = true;
+      state.live.adapter = j.adapter || null;
+      if (added) render();
+    } catch {
+      state.live.connected = false;
+    }
+    renderStatus();
+  }
+
+  // ---------- Rendering ----------
+  let lastRowIds = new Set();
+  function render() {
+    const list = scoped(), t = totals(list);
+    $("sTokens").textContent = fmtTok(t.tokens);
+    $("sDocs").textContent = t.pages ? fmtInt(t.pages) : fmtInt(t.docs);
+    $("sDocsK").textContent = t.pages ? `Pages embedded (${t.docs} docs)` : "Documents embedded";
+    $("sQs").textContent = fmtInt(t.qs);
+    $("sAgent").textContent = fmtInt(t.agent);
+    $("sMin").textContent = fmtInt(t.min);
+    state.target = { small: t.small, mid: t.mid };
+    renderLocal(t);
+
+    // Feed
+    const recent = list.slice(-7).reverse();
+    const rows = $("rows");
+    if (!recent.length) {
+      rows.innerHTML = '<div class="empty">Waiting for activity. Press <kbd>H</kbd> for demo controls.</div>';
+    } else {
+      const ICON = { embed: "D", chat: "Q", agent: "A", transcribe: "M" };
+      const showTier = state.tier === "both" ? "mid" : state.tier;
+      rows.innerHTML = "";
+      for (const e of recent) {
+        const tok = (e.inputTokens || 0) + (e.outputTokens || 0) + (e.embedTokens || 0);
+        const div = document.createElement("div");
+        div.className = "row" + (lastRowIds.has(e.id) ? "" : " new");
+        const extra = e.kind === "embed" && e.pages ? `${e.pages} pages` : e.kind === "agent" && e.steps ? `${e.steps} steps` : e.kind === "transcribe" ? `${e.audioMinutes} min audio` : "";
+        div.innerHTML = `<span class="ic ${e.kind}"></span><span class="lbl"></span><span class="tok num"></span><span class="usd num ${showTier === "mid" ? "mid" : ""}"></span>`;
+        div.querySelector(".ic").textContent = ICON[e.kind] || "?";
+        const lbl = div.querySelector(".lbl");
+        lbl.textContent = e.label || e.kind;
+        if (extra || e.estimated) { const em = document.createElement("em"); em.textContent = [extra, e.estimated ? "est." : ""].filter(Boolean).join(" · "); lbl.appendChild(em); }
+        // Tag goes first so a long prompt can't push it out of view.
+        if (e.route === "cloud") { const em = document.createElement("em"); em.className = "via"; em.textContent = "Cloud · " + cloudTier(e).model; lbl.prepend(em); }
+        div.querySelector(".tok").textContent = tok ? fmtTok(tok) + " tok" : "";
+        const usd = div.querySelector(".usd");
+        if (e.route === "cloud") { usd.className = "usd num spent"; usd.textContent = fmtUSD(spent(e)) + (cloudTier(e).free ? " list" : " paid"); }
+        else usd.textContent = "+" + fmtUSD(cost(e, showTier));
+        rows.appendChild(div);
+      }
+      lastRowIds = new Set(recent.map(e => e.id));
+    }
+    renderTier();
+    renderStatus();
+  }
+
+  // The local card stays "$0.00, on this PC" until the router sends a reply to the cloud.
+  // From then on it shows what was really paid, next to the all-cloud figure.
+  function renderLocal(t) {
+    const routed = t.cloudQs > 0;
+    const free = t.freeModel;
+    $("localLabel").textContent = !routed ? CFG.localLabel : free ? "Cloud cost with the model router" : "Actually paid, with the model router";
+    $("localAmt").textContent = routed ? fmtUSD(t.spent) : "$0.00";
+    $("localSub").textContent = !routed ? "Runs on the device. Nothing metered."
+      : `${t.cloudQs} of ${t.qs} ${t.qs === 1 ? "reply" : "replies"} sent to the cloud`
+        + (free ? ` (${free.model}, free tier here, shown at its $${free.inPerM.toFixed(2)} in / $${free.outPerM.toFixed(2)} out per 1M list price)` : "")
+        + ". Everything else ran on this PC for $0.";
+    $("localChips").innerHTML = (routed ? ["Private stays local", "Cloud only when it earns it"] : ["No per-token fees", "No API key", "Works offline"])
+      .map(c => `<span class="chip">${c}</span>`).join("");
+  }
+
+  function renderTier() {
+    document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tier === state.tier)));
+    $("cloudCard").classList.toggle("both", state.tier === "both");
+    const s = CFG.tiers.small, m = CFG.tiers.mid;
+    if (state.tier !== "both") {
+      const p = CFG.tiers[state.tier];
+      $("cloudSub").textContent = `${p.label} · ${p.model} list price ($${p.inPerM.toFixed(2)} in / $${p.outPerM.toFixed(2)} out per 1M tokens)`;
+    }
+    $("dualSmallName").innerHTML = ""; $("dualSmallName").append(s.label, Object.assign(document.createElement("small"), { textContent: s.model }));
+    $("dualMidName").innerHTML = ""; $("dualMidName").append(m.label, Object.assign(document.createElement("small"), { textContent: m.model }));
+
+    // Projection
+    const P = CFG.projection, lines = $("projLines");
+    lines.innerHTML = "";
+    const tiers = state.tier === "both" ? ["small", "mid"] : [state.tier];
+    for (const t of tiers) {
+      const pr = projection(t);
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `<div class="big2 num ${t === "mid" ? "mid" : ""}"></div><div class="cap"></div>`;
+      wrap.querySelector(".big2").textContent = fmtBig(pr.team) + " / yr";
+      wrap.querySelector(".cap").textContent = `${CFG.tiers[t].label} API fees for ${fmtInt(P.seats)} people, ${P.workdays} workdays. On device: $0.`;
+      lines.appendChild(wrap);
+    }
+    const d = P.perSeatPerDay;
+    $("projAssume").textContent = `Assumed per person per day: ${d.questions} questions, ${d.agentTasks} agent tasks, ${d.pagesEmbedded} pages embedded, ${d.meetingMinutes} meeting minutes. Edit in config.json.`;
+    $("footNote").textContent = `Cloud figures use ${CFG.pricingNote} Embeddings: ${CFG.embedModel}. Transcription: ${CFG.transcribeModel}.${Object.values(CFG.cloudModels || {}).map(m => ` Routed replies on ${m.label}: its paid list price${m.free ? ", though sent on the free tier" : ""}.`).join("")} Excludes caching and batch discounts. Local cost excludes hardware and electricity.`;
+  }
+
+  function renderStatus() {
+    const online = navigator.onLine;
+    $("netDot").className = "dot " + (online ? "" : "ok");
+    $("netTxt").textContent = online ? "Network: online" : "Network: offline";
+    const src = $("srcDot"), txt = $("srcTxt");
+    if (state.mode === "sim") { src.className = "dot warn"; txt.textContent = state.auto ? "Simulator · auto" : "Simulator"; }
+    else if (!state.live.connected) { src.className = "dot bad"; txt.textContent = "Live · helper offline"; }
+    else if (state.live.adapter && state.live.adapter.ok === false) { src.className = "dot warn"; txt.textContent = "Live · " + (state.live.adapter.msg || "adapter idle"); }
+    else if (state.live.adapter && state.live.adapter.msg === "connected") { src.className = "dot ok"; txt.textContent = "Live · AnythingLLM"; }
+    else { src.className = "dot ok"; txt.textContent = "Live · manual events"; }
+    $("scopePill").textContent = state.scope === "today" ? "Today, all visitors" : "This demo";
+    $("helpMode").textContent = state.mode === "sim"
+      ? "Simulator mode. Events are generated locally with realistic token counts."
+      : "Live mode. Real usage streams in from the helper. Keys 1 to 5 add manual events as a fallback.";
+  }
+
+  function flashDelta(e) {
+    const t = state.tier === "both" ? "mid" : state.tier;
+    const d = $("delta");
+    d.textContent = "+" + fmtUSD(cost(e, t));
+    d.classList.remove("show"); void d.offsetWidth; d.classList.add("show");
+    const c = $("cloudCard"); c.classList.remove("pulse"); void c.offsetWidth; c.classList.add("pulse");
+  }
+
+  // Smooth count-up for the big numbers
+  function tick() {
+    const tg = state.target || { small: 0, mid: 0 };
+    for (const k of ["small", "mid"]) {
+      const diff = tg[k] - state.shown[k];
+      state.shown[k] = Math.abs(diff) < 1e-6 ? tg[k] : state.shown[k] + diff * 0.08;
+    }
+    const single = state.tier === "both" ? null : state.shown[state.tier];
+    if (single != null) $("cloudAmt").textContent = fmtUSD(single);
+    $("dualSmall").textContent = fmtUSD(state.shown.small);
+    $("dualMid").textContent = fmtUSD(state.shown.mid);
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Controls ----------
+  let toastTimer;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1600); }
+  function setTier(t) { state.tier = t; store.set("meter:tier", t); render(); }
+  function act(a) {
+    switch (a) {
+      case "embed": case "chat": case "agent": case "meeting": case "cloudchat": trigger(a); break;
+      case "auto": setAuto(!state.auto); renderStatus(); toast(state.auto ? "Auto-play on" : "Auto-play off"); break;
+      case "tier": setTier({ small: "mid", mid: "both", both: "small" }[state.tier]); break;
+      case "scope": state.scope = state.scope === "session" ? "today" : "session"; store.set("meter:scope", state.scope); state.shown = { small: 0, mid: 0 }; render(); break;
+      case "reset": state.sessionStart = Date.now(); store.set("meter:sessionStart", state.sessionStart); state.scope = "session"; store.set("meter:scope", "session"); state.shown = { small: 0, mid: 0 }; lastRowIds = new Set(); render(); toast("Reset for next visitor"); break;
+      case "full": if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); break;
+      case "help": case "close": { const o = $("overlay"); const open = a === "help" ? !o.classList.contains("open") : false; o.classList.toggle("open", open); o.setAttribute("aria-hidden", String(!open)); break; }
+    }
+  }
+  const KEYMAP = { "1": "embed", "2": "chat", "3": "agent", "4": "meeting", "5": "cloudchat", a: "auto", t: "tier", d: "scope", r: "reset", f: "full", h: "help", escape: "close" };
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const a = KEYMAP[e.key.toLowerCase()];
+    if (a) { e.preventDefault(); act(a); }
+  });
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setTier(b.dataset.tier)));
+  document.querySelectorAll(".keys button").forEach(b => b.addEventListener("click", () => act(b.dataset.act)));
+  $("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") act("close"); });
+  window.addEventListener("online", renderStatus);
+  window.addEventListener("offline", renderStatus);
+
+  // ---------- Boot ----------
+  (async function boot() {
+    await loadConfig();
+    if (state.mode === "sim") {
+      for (const e of store.get("meter:events:" + dayKey(), [])) addEvent(e, false);
+    } else {
+      await poll();
+      setInterval(poll, CFG.pollMs);
+    }
+    if (params.get("auto") === "1" && state.mode === "sim") setAuto(true);
+    render();
+    const t = totals(scoped());
+    state.shown = { small: t.small, mid: t.mid };
+    requestAnimationFrame(tick);
+  })();
+})();
+</script>
+</body>
+</html>
