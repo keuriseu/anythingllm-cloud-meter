@@ -27,7 +27,7 @@ Everything runs on `127.0.0.1` and works in airplane mode. The meter needs no in
 | 4. Models | Downloads the NPU and GGUF Qwen3 4B models (about 5.2 GB), sets GenieX as the default provider, checks the embedder | Wait |
 | 5. Workspaces | Uploads the six demo documents, creates **Quick Answers** and **Deal Room** with the tested settings and pinned files | Nothing |
 | 6. Encore (optional) | Creates the Model Router, its rules and the **Bid Desk** workspace, and fixes the settings OpenRouter changes | Save an OpenRouter key in AnythingLLM |
-| 7. Shortcuts | Desktop shortcuts: **AI Cost Meter**, **Demo Pre-show Reset**, **Pre-warm Deal Room** (Ctrl+Alt+W) | Nothing |
+| 7. Shortcuts | Desktop shortcuts: **AI Cost Meter**, **Run of Show**, **Demo Pre-show Reset**, **Pre-warm Deal Room** (Ctrl+Alt+W) | Nothing |
 
 ## Show day
 
@@ -37,7 +37,18 @@ Everything runs on `127.0.0.1` and works in airplane mode. The meter needs no in
     - asks you to close heavy apps, unplug the charger and turn on airplane mode;
     - warms up both models, Quick Answers last, then clears the warm-up chats;
     - opens the cost meter full screen on the second display.
-3. On the meter, press `R` to reset it for the audience. Follow [docs/STAGE_SCRIPT.md](docs/STAGE_SCRIPT.md).
+3. On the meter, press `R` to reset it for the audience.
+4. Present from the **Run of Show** window, which opens on the right of your main screen. Put AnythingLLM on the left. Every prompt has a copy button: click it (or press its number, or Space for the next one), then press Ctrl+V in AnythingLLM. The full script with background is in [docs/STAGE_SCRIPT.md](docs/STAGE_SCRIPT.md).
+
+### Run of Show (presenter view)
+
+`http://127.0.0.1:7777/show`, opened by the **AI Cost Meter** and **Run of Show** shortcuts, or with `S` on the meter. It's a narrow page for your own screen, not the audience's:
+
+- each beat's steps, lines to say, and expected answers
+- a copy button on every prompt (keys `1` to `8`); **Space** copies the next one, shown in the bar at the top
+- copied prompts are ticked off; **Reset** clears them for the next run
+- the encore stays folded until you open it or copy one of its prompts
+- a pill showing whether the meter is connected to AnythingLLM
 
 ## The cost meter
 
@@ -54,7 +65,7 @@ Everything runs on `127.0.0.1` and works in airplane mode. The meter needs no in
 |---|---|
 | `setup.cmd`, `setup.ps1` | One-time setup wizard |
 | `preshow.cmd`, `preshow.ps1` | Pre-show reset, right before going on stage |
-| `cloud-meter/` | The meter: `index.html`, `server.js`, `config.json`, AnythingLLM adapter, launcher |
+| `cloud-meter/` | The meter (`index.html`), the Run of Show presenter page (`show.html`), `server.js`, `config.json`, AnythingLLM adapter, launcher |
 | `demo-kit/documents/` | The six fictional deal documents the demo uses |
 | `demo-kit/scripts/` | Node scripts the wizards run (setup, checks, chat reset, pre-warm, timed rehearsal) |
 | `demo-kit/ANSWER_KEY.md` | Expected answers. Never upload it to AnythingLLM. |

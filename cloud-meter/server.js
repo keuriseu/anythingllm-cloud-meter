@@ -98,7 +98,7 @@ if (config.live && config.live.enabled) {
 }
 
 // ---------- HTTP ----------
-const STATIC = { "/": "index.html", "/index.html": "index.html", "/config.json": "config.json" };
+const STATIC = { "/": "index.html", "/index.html": "index.html", "/config.json": "config.json", "/show": "show.html", "/show.html": "show.html" };
 const TYPES = { ".html": "text/html; charset=utf-8", ".json": "application/json; charset=utf-8" };
 
 function send(res, code, body, type = "application/json; charset=utf-8") {

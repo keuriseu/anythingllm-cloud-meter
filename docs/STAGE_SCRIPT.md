@@ -4,7 +4,7 @@ The whole demo takes about 4 minutes, plus about 2 for the optional router encor
 
 ## Before you walk on
 
-Double-click **Demo Pre-show Reset** on the desktop (`preshow.cmd`). It resets the workspaces and chats, asks you to close apps, unplug and go into airplane mode, warms up both models and opens the cost meter. Then check:
+Double-click **Demo Pre-show Reset** on the desktop (`preshow.cmd`). It resets the workspaces and chats, asks you to close apps, unplug and go into airplane mode, warms up both models, opens the cost meter on the second screen and the **Run of Show** window on the right of your main screen. Present from Run of Show: every prompt below has a copy button there (or press its number, or Space for the next one), then Ctrl+V in AnythingLLM. Then check:
 
 - [ ] Charger unplugged, airplane mode on
 - [ ] Spotify, Ollama and other heavy apps closed

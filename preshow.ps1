@@ -41,5 +41,6 @@ Step 7 "Start the cost meter"
 & (Join-Path $Root "cloud-meter\start-meter.cmd")
 Write-Host ""
 Write-Host "Ready. On the meter: check the status reads 'Live - AnythingLLM' (green), then press R." -ForegroundColor Green
+Write-Host "Present from the Run of Show window on the right; put AnythingLLM on the left."
 Write-Host "In AnythingLLM: open Quick Answers. Never click Stop on a reply."
 Read-Host "Press Enter to close"

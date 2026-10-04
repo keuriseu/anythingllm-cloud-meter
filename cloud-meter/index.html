@@ -239,6 +239,7 @@
       <button data-act="scope"><kbd>D</kbd> Toggle this demo / today</button>
       <button data-act="reset"><kbd>R</kbd> Reset for next visitor</button>
       <button data-act="full"><kbd>F</kbd> Full screen</button>
+      <button data-act="show"><kbd>S</kbd> Open the run of show (presenter view)</button>
       <button data-act="close"><kbd>H</kbd> Close</button>
     </div>
   </div>
@@ -612,11 +613,12 @@
       case "tier": setTier({ small: "mid", mid: "both", both: "small" }[state.tier]); break;
       case "scope": state.scope = state.scope === "session" ? "today" : "session"; store.set("meter:scope", state.scope); state.shown = { small: 0, mid: 0 }; render(); break;
       case "reset": state.sessionStart = Date.now(); store.set("meter:sessionStart", state.sessionStart); state.scope = "session"; store.set("meter:scope", "session"); state.shown = { small: 0, mid: 0 }; lastRowIds = new Set(); render(); toast("Reset for next visitor"); break;
+      case "show": window.open("show.html", "run-of-show", "width=520,height=900"); break;
       case "full": if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); break;
       case "help": case "close": { const o = $("overlay"); const open = a === "help" ? !o.classList.contains("open") : false; o.classList.toggle("open", open); o.setAttribute("aria-hidden", String(!open)); break; }
     }
   }
-  const KEYMAP = { "1": "embed", "2": "chat", "3": "agent", "4": "meeting", "5": "cloudchat", a: "auto", t: "tier", d: "scope", r: "reset", f: "full", h: "help", escape: "close" };
+  const KEYMAP = { "1": "embed", "2": "chat", "3": "agent", "4": "meeting", "5": "cloudchat", s: "show", a: "auto", t: "tier", d: "scope", r: "reset", f: "full", h: "help", escape: "close" };
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const a = KEYMAP[e.key.toLowerCase()];

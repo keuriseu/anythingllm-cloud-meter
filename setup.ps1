@@ -110,9 +110,10 @@ Step 7 "Desktop shortcuts"
 if ($SkipShortcuts) { Write-Host "    Skipped (-SkipShortcuts)." } else {
 $shell = New-Object -ComObject WScript.Shell
 $desktop = [Environment]::GetFolderPath("Desktop")
-function Make-Shortcut($name, $target, $hotkey, $minimized, $desc) {
+function Make-Shortcut($name, $target, $hotkey, $minimized, $desc, $arguments) {
   $s = $shell.CreateShortcut((Join-Path $desktop "$name.lnk"))
   $s.TargetPath = $target
+  if ($arguments) { $s.Arguments = $arguments }
   $s.WorkingDirectory = Split-Path $target
   $s.Description = $desc
   if ($hotkey) { $s.Hotkey = $hotkey }
@@ -120,7 +121,8 @@ function Make-Shortcut($name, $target, $hotkey, $minimized, $desc) {
   $s.Save()
   Ok "$name$(if ($hotkey) { " ($hotkey)" })"
 }
-Make-Shortcut "AI Cost Meter" (Join-Path $Root "cloud-meter\start-meter.cmd") $null $true "Opens the AI cost meter full screen on the second display"
+Make-Shortcut "AI Cost Meter" (Join-Path $Root "cloud-meter\start-meter.cmd") $null $true "Opens the AI cost meter on the second display and the Run of Show on this one"
+Make-Shortcut "Run of Show" (Join-Path $Root "cloud-meter\start-meter.cmd") $null $true "Opens the presenter page with copy buttons for every prompt" "-ShowOnly"
 Make-Shortcut "Demo Pre-show Reset" (Join-Path $Root "preshow.cmd") $null $false "Resets workspaces and chats, warms up the models, starts the meter"
 Make-Shortcut "Pre-warm Deal Room" (Join-Path $Scripts "prewarm-deal-room.cmd") "Ctrl+Alt+W" $true "Loads the Deal Room model; press Ctrl+Alt+W on stage after Q3"
 }

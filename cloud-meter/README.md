@@ -43,6 +43,7 @@ Add `?mode=sim` or `?mode=live` to the URL to override the mode in `config.json`
 | `R` | Reset for the next visitor (today's total is kept) |
 | `F` | Full screen |
 | `H` | Show or hide controls |
+| `S` | Open the Run of Show presenter page in a new window |
 
 The tier buttons in the top bar are also clickable.
 
@@ -78,10 +79,11 @@ The "At team scale" panel uses the usage profile in `config.projection`. With th
 ## Files
 
 - `index.html` the meter (self-contained, no internet needed)
+- `show.html` the Run of Show presenter page with copy buttons for every prompt, served at `/show` (keep its prompts in sync with `docs/STAGE_SCRIPT.md`)
 - `config.json` prices, labels, projection profile, live settings
 - `server.js` zero-dependency local helper
 - `adapters/anythingllm.js` AnythingLLM integration (verified on AnythingLLM 1.17.0)
 - `adapters/test-anythingllm.js` checks the adapter against rehearsal chats
-- `start-meter.cmd`, `start-meter.ps1` show-day launcher
+- `start-meter.cmd`, `start-meter.ps1` show-day launcher: meter full screen on the second display, Run of Show on the right of the main display (`-ShowOnly` or `-MeterOnly` to open one)
 - `../docs/METER_NOTES.md` build notes and AnythingLLM spike findings
 - `data/` daily event logs written by the helper
