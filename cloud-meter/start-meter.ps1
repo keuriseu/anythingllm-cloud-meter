@@ -12,6 +12,19 @@ $url = "http://127.0.0.1:$port"
 function Test-Helper {
   try { Invoke-RestMethod "$url/api/health" -TimeoutSec 1 | Out-Null; return $true } catch { return $false }
 }
+function Test-ShowPage {
+  try { return (Invoke-WebRequest "$url/show" -UseBasicParsing -TimeoutSec 2).StatusCode -eq 200 } catch { return $false }
+}
+
+# A helper from an older copy of the meter (no /show page) blocks this one: stop it.
+if ((Test-Helper) -and -not (Test-ShowPage)) {
+  $old = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($old) {
+    Write-Host "Stopping an older meter helper on port $port (PID $($old.OwningProcess))."
+    Stop-Process -Id $old.OwningProcess -Force
+    for ($i = 0; $i -lt 20 -and (Test-Helper); $i++) { Start-Sleep -Milliseconds 200 }
+  }
+}
 
 if (-not (Test-Helper)) {
   Start-Process -FilePath "node" -ArgumentList "server.js" -WorkingDirectory $PSScriptRoot -WindowStyle Minimized
